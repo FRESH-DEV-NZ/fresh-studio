@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/api"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/database"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/store"
 )
@@ -54,6 +55,8 @@ func main() {
 	log.Println("Studio database connected")
 
 	appStore := store.New(db)
+	apiHandler := api.NewHandler(appStore)
+	apiHandler.RegisterRoutes(mux)
 
 	server := &http.Server{
 		Addr:         ":8080",
