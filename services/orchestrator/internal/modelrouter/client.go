@@ -26,6 +26,7 @@ type ChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
 	Stream   bool      `json:"stream"`
+	Format   string    `json:"format,omitempty"`
 }
 
 type ChatResponse struct {
@@ -59,6 +60,21 @@ func (c *Client) Chat(
 	ctx context.Context,
 	messages []Message,
 ) (*ChatResponse, error) {
+	return c.chat(ctx, messages, "")
+}
+
+func (c *Client) ChatJSON(
+	ctx context.Context,
+	messages []Message,
+) (*ChatResponse, error) {
+	return c.chat(ctx, messages, "json")
+}
+
+func (c *Client) chat(
+	ctx context.Context,
+	messages []Message,
+	format string,
+) (*ChatResponse, error) {
 	if len(messages) == 0 {
 		return nil, fmt.Errorf("at least one message is required")
 	}
@@ -67,6 +83,7 @@ func (c *Client) Chat(
 		Model:    c.model,
 		Messages: messages,
 		Stream:   false,
+		Format:   format,
 	}
 
 	payload, err := json.Marshal(requestBody)
