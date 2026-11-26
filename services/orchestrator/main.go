@@ -1,11 +1,14 @@
-
 package main
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/database"
 )
 
 type HealthResponse struct {
@@ -30,6 +33,24 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
+
+	dbPath := filepath.Join("data", "studio.db")
+
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := database.New(dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	if err := database.Migrate(db); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Studio database connected")
 
 	server := &http.Server{
 		Addr:         ":8080",
