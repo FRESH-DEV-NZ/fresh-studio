@@ -10,6 +10,25 @@ Node.js	v22.22.2
 npm	10.9.7
 Ollama	0.40.16
 
+### Check a local Ollama model
+
+Create a `.env` file in the repository root with an already installed model:
+
+```dotenv
+OLLAMA_MODEL=qwen3.5:2b
+OLLAMA_HOST=http://localhost:11434
+```
+
+Run `ollama list` to see installed models, then run this command from the
+repository root:
+
+```powershell
+go run .\services\orchestrator\cmd\modelcheck
+```
+
+The command loads `.env` from the current working directory. Existing process
+environment variables take precedence, and can be used without a `.env` file.
+
 ```
 ai-game-studio/
 │

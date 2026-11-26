@@ -11,6 +11,8 @@ import (
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/api"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/database"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/store"
+
+	"github.com/joho/godotenv"
 )
 
 type HealthResponse struct {
@@ -32,6 +34,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", healthHandler)
