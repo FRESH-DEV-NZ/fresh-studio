@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/database"
+	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/store"
 )
 
 type HealthResponse struct {
@@ -51,6 +52,8 @@ func main() {
 	}
 
 	log.Println("Studio database connected")
+
+	appStore := store.New(db)
 
 	server := &http.Server{
 		Addr:         ":8080",
