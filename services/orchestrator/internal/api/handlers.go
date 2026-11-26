@@ -1,25 +1,36 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/agents"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/store"
 )
 
 type Handler struct {
-	store *store.Store
+	store           *store.Store
+	conceptDesigner agent.Agent
+	conceptSlot     chan struct{}
 }
 
-func NewHandler(s *store.Store) *Handler {
-	return &Handler{store: s}
+func NewHandler(s *store.Store, conceptDesigner agent.Agent) *Handler {
+	return &Handler{
+		store:           s,
+		conceptDesigner: conceptDesigner,
+		conceptSlot:     make(chan struct{}, 1),
+	}
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /concepts", h.createConcept)
 	mux.HandleFunc("POST /projects", h.createProject)
 	mux.HandleFunc("GET /projects", h.listProjects)
 	mux.HandleFunc("GET /projects/{id}", h.getProject)
@@ -28,6 +39,42 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /projects/{id}/tasks", h.listTasks)
 
 	mux.HandleFunc("PATCH /tasks/{id}", h.updateTask)
+}
+
+func (h *Handler) createConcept(w http.ResponseWriter, r *http.Request) {
+	var task agent.Task
+	if err := decodeJSON(w, r, &task); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON request")
+		return
+	}
+	if strings.TrimSpace(task.Objective) == "" {
+		writeError(w, http.StatusBadRequest, "Task objective is required")
+		return
+	}
+
+	select {
+	case h.conceptSlot <- struct{}{}:
+		defer func() { <-h.conceptSlot }()
+	default:
+		writeError(w, http.StatusTooManyRequests, "Concept designer is busy")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Minute)
+	defer cancel()
+	log.Printf("Concept design started: task_id=%q", task.ID)
+	result, err := h.conceptDesigner.Run(ctx, task)
+	if err != nil {
+		log.Printf("Concept design failed: task_id=%q error=%v", task.ID, err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			writeError(w, http.StatusGatewayTimeout, "Concept design timed out")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Could not generate concept")
+		return
+	}
+	log.Printf("Concept design completed: task_id=%q model=%q", task.ID, result.Model)
+	writeJSON(w, http.StatusOK, result)
 }
 
 type createProjectRequest struct {
