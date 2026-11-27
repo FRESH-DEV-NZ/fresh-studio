@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/agents"
+	agent "github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/agents"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/modelrouter"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/promptloader"
 )
@@ -39,14 +39,24 @@ func TestRun(t *testing.T) {
 	defer server.Close()
 
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "concept_designer.md"), []byte("Design a game"), 0600); err != nil {
+	promptDir := filepath.Join(root, "prompts")
+
+	if err := os.MkdirAll(promptDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(
+		filepath.Join(promptDir, "concept_designer.md"),
+		[]byte("Design a game"),
+		0600,
+	); err != nil {
 		t.Fatal(err)
 	}
 	client, err := modelrouter.NewClient(server.URL, "test-model")
 	if err != nil {
 		t.Fatal(err)
 	}
-	designer := NewConceptDesigner(client, promptloader.New(root))
+	designer := NewConceptDesigner(client, promptloader.New(promptDir))
 
 	result, err := designer.Run(context.Background(), agent.Task{ID: "task-1", Objective: "Make a puzzle"})
 	if err != nil {
