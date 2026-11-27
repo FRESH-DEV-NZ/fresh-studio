@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"io"
+
 	agent "github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/agents"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/modelrouter"
 	"github.com/FRESH-DEV-NZ/fresh-studio/services/orchestrator/internal/promptloader"
@@ -154,16 +156,26 @@ func (d *ConceptDesigner) Run(
 		%s
 
 		Return a valid JSON object containing exactly these fields:
-		- title: string
-		- genre: string
-		- core_loop: string
-		- target_audience: string
-		- unique_hook: string
-		- mechanics: array of strings
-		- progression: string
-		- target_session_minutes: integer
+
+		{
+		"title": "string",
+		"genre": "string",
+		"core_gameplay_loop": ["string"],
+		"target_audience": "string",
+		"unique_hook": "string",
+		"mechanics": [
+			{
+			"name": "string",
+			"description": "string"
+			}
+		],
+		"progression": "string",
+		"target_session_minutes": 5,
+		"development_complexity": "Low"
+		}
 
 		Do not include Markdown code fences or any text outside the JSON object.`,
+
 		task.Objective,
 		defaultValue(task.Context, "None provided"),
 		constraints,
@@ -183,17 +195,43 @@ func (d *ConceptDesigner) Run(
 	// Request structured JSON from Ollama.
 	response, err := d.model.ChatJSON(ctx, messages)
 	if err != nil {
-		return nil, fmt.Errorf("generate game concept: %w", err)
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("generate game concept: request cancelled or timed out: %w", ctx.Err())
+		}
+
+		return nil, fmt.Errorf("generate game concept: Ollama request failed: %w", err)
+	}
+
+	if response == nil {
+		return nil, fmt.Errorf("generate game concept: Ollama returned an empty response")
+	}
+
+	if strings.TrimSpace(response.Message.Content) == "" {
+		return nil, fmt.Errorf("generate game concept: Ollama returned empty content")
+	}
+
+	if strings.TrimSpace(response.Model) == "" {
+		return nil, fmt.Errorf("generate game concept: Ollama response did not identify a model")
 	}
 
 	// Parse and validate the model's JSON response.
 	var concept GameConcept
-	//fmt.Printf("RAW MODEL RESPONSE:\n%s\n", response.Message.Content)
-	if err := json.Unmarshal(
-		[]byte(response.Message.Content),
-		&concept,
-	); err != nil {
+
+	decoder := json.NewDecoder(
+		strings.NewReader(response.Message.Content),
+	)
+
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&concept); err != nil {
 		return nil, fmt.Errorf("decode game concept JSON: %w", err)
+	}
+
+	// Ensure the response contains exactly one JSON value.
+	var extra interface{}
+
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return nil, fmt.Errorf("decode game concept JSON: unexpected additional content")
 	}
 
 	if err := concept.Validate(); err != nil {
