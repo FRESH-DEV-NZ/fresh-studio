@@ -12,14 +12,20 @@ import (
 )
 
 type GameConcept struct {
-	Title             string   `json:"title"`
-	Genre             string   `json:"genre"`
-	CoreLoop          string   `json:"core_loop"`
-	TargetAudience    string   `json:"target_audience"`
-	UniqueHook        string   `json:"unique_hook"`
-	Mechanics         []string `json:"mechanics"`
-	Progression       string   `json:"progression"`
-	TargetSessionMins int      `json:"target_session_minutes"`
+	Title                 string     `json:"title"`
+	Genre                 string     `json:"genre"`
+	CoreGameplayLoop      []string   `json:"core_gameplay_loop"`
+	TargetAudience        string     `json:"target_audience"`
+	UniqueHook            string     `json:"unique_hook"`
+	Mechanics             []Mechanic `json:"mechanics"`
+	Progression           string     `json:"progression"`
+	TargetSessionMinutes  int        `json:"target_session_minutes"`
+	DevelopmentComplexity string     `json:"development_complexity"`
+}
+
+type Mechanic struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type ConceptDesigner struct {
@@ -120,7 +126,7 @@ Do not include Markdown code fences or any text outside the JSON object.`,
 
 	// Parse and validate the model's JSON response.
 	var concept GameConcept
-
+	fmt.Printf("RAW MODEL RESPONSE:\n%s\n", response.Message.Content)
 	if err := json.Unmarshal(
 		[]byte(response.Message.Content),
 		&concept,

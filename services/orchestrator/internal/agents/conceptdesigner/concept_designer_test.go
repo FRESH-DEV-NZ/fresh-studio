@@ -29,7 +29,7 @@ func TestRun(t *testing.T) {
 		response := modelrouter.ChatResponse{
 			Model: "test-model",
 			Message: modelrouter.Message{
-				Content: `{"title":"Test","genre":"Puzzle","core_loop":"Solve puzzles","target_audience":"Everyone","unique_hook":"Living puzzles","mechanics":["Rotate"],"progression":"New puzzles","target_session_minutes":5}`,
+				Content: `{"title":"Test","genre":"Puzzle","core_gameplay_loop":["Solve puzzles"],"target_audience":"Everyone","unique_hook":"Living puzzles","mechanics":[{"name":"Rotate","description":"Rotate puzzle pieces"}],"progression":"New puzzles","target_session_minutes":5,"development_complexity":"Low"}`,
 			},
 		}
 		if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -69,7 +69,7 @@ func TestRun(t *testing.T) {
 	if err := json.Unmarshal(result.Output, &concept); err != nil {
 		t.Fatal(err)
 	}
-	if concept.Title != "Test" || concept.TargetSessionMins != 5 {
+	if concept.Title != "Test" || concept.TargetSessionMinutes != 5 {
 		t.Fatalf("unexpected concept: %+v", concept)
 	}
 }

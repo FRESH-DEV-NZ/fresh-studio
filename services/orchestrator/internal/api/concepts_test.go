@@ -45,7 +45,7 @@ func TestCreateConceptEndToEnd(t *testing.T) {
 			t.Errorf("unexpected model request: %s %+v", r.URL.Path, request)
 		}
 		response := modelrouter.ChatResponse{Model: "test-model", Message: modelrouter.Message{
-			Content: `{"title":"Test","genre":"Puzzle","core_loop":"Solve","unique_hook":"Living puzzles","mechanics":["Rotate"],"target_session_minutes":5}`,
+			Content: `{"title":"Test","genre":"Puzzle","core_gameplay_loop":["Solve"],"target_audience":"Everyone","unique_hook":"Living puzzles","mechanics":[{"name":"Rotate","description":"Rotate puzzle pieces"}],"progression":"New puzzles","target_session_minutes":5,"development_complexity":"Low"}`,
 		}}
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			t.Errorf("encode response: %v", err)

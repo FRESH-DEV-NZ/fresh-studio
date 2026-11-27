@@ -27,34 +27,33 @@ creative, compelling and commercially viable game concepts.
 
 ## Output Requirements
 
-Return a structured JSON object with these fields:
+Return a valid JSON object with exactly these fields:
 
 {
-  "title": "Game title",
-  "elevator_pitch": "Short description",
-  "genre": "Primary genre",
-  "target_audience": "Intended audience",
-  "platforms": ["Web"],
+  "title": "string",
+  "genre": "string",
   "core_gameplay_loop": [
-    "Step 1",
-    "Step 2",
-    "Step 3"
+    "string",
+    "string"
   ],
+  "target_audience": "string",
+  "unique_hook": "string",
   "mechanics": [
     {
-      "name": "Mechanic name",
-      "description": "Explanation"
+      "name": "string",
+      "description": "string"
     }
   ],
-  "unique_selling_points": [
-    "Differentiator"
-  ],
-  "art_direction": "Visual style",
-  "development_complexity": "Low, Medium or High",
-  "risks": [
-    "Potential risk"
-  ]
+  "progression": "string",
+  "target_session_minutes": 5,
+  "development_complexity": "Low | Medium | High"
 }
 
-Return valid JSON only.
-Do not include Markdown code fences or additional commentary.
+Requirements:
+- Follow the schema exactly.
+- Do not rename any fields.
+- Do not add additional fields.
+- core_gameplay_loop must be an array of strings.
+- mechanics must be an array of objects with name and description.
+- Return valid JSON only.
+- Do not use Markdown code fences.
