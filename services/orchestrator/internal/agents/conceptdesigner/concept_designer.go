@@ -126,7 +126,7 @@ Do not include Markdown code fences or any text outside the JSON object.`,
 
 	// Parse and validate the model's JSON response.
 	var concept GameConcept
-	fmt.Printf("RAW MODEL RESPONSE:\n%s\n", response.Message.Content)
+	//fmt.Printf("RAW MODEL RESPONSE:\n%s\n", response.Message.Content)
 	if err := json.Unmarshal(
 		[]byte(response.Message.Content),
 		&concept,
